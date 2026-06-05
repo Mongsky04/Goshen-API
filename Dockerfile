@@ -1,0 +1,16 @@
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN go build -ldflags="-w -s" -o server ./cmd/server
+
+FROM alpine:latest
+RUN apk add --no-cache postgresql-client ca-certificates
+WORKDIR /app
+COPY --from=builder /app/server .
+COPY db/ db/
+COPY start.sh .
+RUN chmod +x start.sh
+EXPOSE 8080
+CMD ["sh", "start.sh"]
