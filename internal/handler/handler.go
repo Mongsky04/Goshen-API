@@ -114,6 +114,12 @@ type mediaAssetRepo interface {
 	Delete(ctx context.Context, id int64) error
 }
 
+// pageBannersRepo manages which banners are assigned to each page.
+type pageBannersRepo interface {
+	ListBySlug(ctx context.Context, slug string) ([]model.Slider, error)
+	Replace(ctx context.Context, slug string, bannerIDs []int64) error
+}
+
 type Handler struct {
 	products     productRepo
 	featured     featuredRepo
@@ -128,6 +134,7 @@ type Handler struct {
 	conference   conferenceRepo
 	performer    performerRepo
 	mediaRepo    mediaAssetRepo
+	pageBanners  pageBannersRepo
 	cfg          *config.Config
 	storage      storage.Storage
 }
@@ -158,6 +165,7 @@ func New(db *pgxpool.Pool, cfg *config.Config) *Handler {
 		conference:   repository.NewConferenceRepo(db),
 		performer:    repository.NewPerformerRepo(db),
 		mediaRepo:    repository.NewMediaAssetRepo(db),
+		pageBanners:  repository.NewPageBannersRepo(db),
 		cfg:          cfg,
 		storage:      store,
 	}

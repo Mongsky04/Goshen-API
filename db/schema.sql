@@ -241,6 +241,14 @@ BEGIN
 END;
 $$;
 
+CREATE TABLE IF NOT EXISTS page_banners (
+  id         BIGSERIAL   PRIMARY KEY,
+  page_slug  TEXT        NOT NULL,
+  banner_id  BIGINT      NOT NULL REFERENCES slider(id) ON DELETE CASCADE,
+  order_num  INT         NOT NULL DEFAULT 0,
+  UNIQUE(page_slug, banner_id)
+);
+
 DO $$
 DECLARE t TEXT;
 BEGIN

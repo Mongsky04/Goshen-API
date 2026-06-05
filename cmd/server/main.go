@@ -70,6 +70,7 @@ func main() {
 	r.Get("/api/v1/customers/{id}", h.GetCustomer)
 	r.Get("/api/v1/support-cards", h.ListSupportCards)
 	r.Get("/api/v1/homepage-grid", h.ListHomepageGrid)
+	r.Get("/api/v1/page-banners/{slug}", h.GetPageBanners)
 	r.Get("/api/v1/media", h.ListMedia)
 
 	// Protected CMS write routes
@@ -115,6 +116,9 @@ func main() {
 
 		// Homepage grid (replaces product_ids list)
 		r.Put("/api/v1/homepage-grid", h.ReplaceHomepageGrid)
+
+		// Page banners (assign catalog banners to a page slug)
+		r.Put("/api/v1/page-banners/{slug}", h.ReplacePageBanners)
 
 		// Conference CMS
 		r.Get("/api/v1/admin/conference-pages/{slug}", h.GetAdminConferencePage)
