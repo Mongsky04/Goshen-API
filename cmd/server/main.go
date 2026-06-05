@@ -62,15 +62,14 @@ func main() {
 	r.Get("/api/v1/featured/{id}", h.GetFeatured)
 	r.Get("/api/v1/articles", h.ListArticles)
 	r.Get("/api/v1/articles/{id}", h.GetArticle)
-	r.Get("/api/v1/slider", h.ListSlider)
-	r.Get("/api/v1/slider/{id}", h.GetSlider)
+	r.Get("/api/v1/banners", h.ListSlider)
+	r.Get("/api/v1/banners/{id}", h.GetSlider)
 	r.Get("/api/v1/brands", h.ListBrands)
 	r.Get("/api/v1/brands/{id}", h.GetBrand)
 	r.Get("/api/v1/customers", h.ListCustomers)
 	r.Get("/api/v1/customers/{id}", h.GetCustomer)
 	r.Get("/api/v1/support-cards", h.ListSupportCards)
 	r.Get("/api/v1/homepage-grid", h.ListHomepageGrid)
-	r.Get("/api/v1/banners", h.ListBanners)
 	r.Get("/api/v1/media", h.ListMedia)
 
 	// Protected CMS write routes
@@ -91,9 +90,9 @@ func main() {
 		r.Put("/api/v1/articles/{id}", h.UpdateArticle)
 		r.Delete("/api/v1/articles/{id}", h.DeleteArticle)
 
-		r.Post("/api/v1/slider", h.CreateSlider)
-		r.Put("/api/v1/slider/{id}", h.UpdateSlider)
-		r.Delete("/api/v1/slider/{id}", h.DeleteSlider)
+		r.Post("/api/v1/banners", h.CreateSlider)
+		r.Put("/api/v1/banners/{id}", h.UpdateSlider)
+		r.Delete("/api/v1/banners/{id}", h.DeleteSlider)
 
 		r.Post("/api/v1/brands", h.CreateBrand)
 		r.Put("/api/v1/brands/{id}", h.UpdateBrand)
@@ -109,10 +108,6 @@ func main() {
 		// Media library
 		r.Post("/api/v1/media", h.UploadMedia)
 		r.Delete("/api/v1/media/{id}", h.DeleteMedia)
-
-		// Banners catalog
-		r.Post("/api/v1/banners", h.CreateBanner)
-		r.Delete("/api/v1/banners/{id}", h.DeleteBanner)
 
 		// Support cards
 		r.Post("/api/v1/support-cards", h.CreateSupportCard)
