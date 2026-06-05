@@ -9,21 +9,26 @@ import (
 	"time"
 )
 
-// Client saves uploaded files to a local directory and serves them via the backend URL.
-type Client struct {
+// Storage is implemented by both LocalClient and CloudinaryClient.
+type Storage interface {
+	Upload(data io.Reader, filename, contentType string) (string, error)
+	Delete(publicURL string) error
+}
+
+// LocalClient saves uploaded files to a local directory and serves them via the backend URL.
+type LocalClient struct {
 	uploadDir string
 	baseURL   string
 }
 
-func New(uploadDir, baseURL string) *Client {
-	return &Client{
+func NewLocal(uploadDir, baseURL string) *LocalClient {
+	return &LocalClient{
 		uploadDir: uploadDir,
 		baseURL:   strings.TrimRight(baseURL, "/"),
 	}
 }
 
-// Upload writes data to uploadDir and returns the public URL.
-func (c *Client) Upload(data io.Reader, filename, contentType string) (string, error) {
+func (c *LocalClient) Upload(data io.Reader, filename, contentType string) (string, error) {
 	if err := os.MkdirAll(c.uploadDir, 0755); err != nil {
 		return "", fmt.Errorf("storage: mkdir: %w", err)
 	}
@@ -42,8 +47,7 @@ func (c *Client) Upload(data io.Reader, filename, contentType string) (string, e
 	return c.baseURL + "/uploads/" + objectName, nil
 }
 
-// Delete removes the file referenced by publicURL. Ignores missing files.
-func (c *Client) Delete(publicURL string) error {
+func (c *LocalClient) Delete(publicURL string) error {
 	if publicURL == "" {
 		return nil
 	}

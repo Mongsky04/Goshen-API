@@ -115,24 +115,35 @@ type mediaAssetRepo interface {
 }
 
 type Handler struct {
-	products       productRepo
-	featured       featuredRepo
-	homepageGrid   homepageGridRepo
-	banners        bannerRepo
-	articles       articleRepo
-	slider         sliderRepo
-	brands         brandRepo
-	customers      customerRepo
-	supportCards   supportCardRepo
-	admins         adminRepo
-	conference     conferenceRepo
-	performer      performerRepo
-	mediaRepo      mediaAssetRepo
-	cfg            *config.Config
-	storage        *storage.Client
+	products     productRepo
+	featured     featuredRepo
+	homepageGrid homepageGridRepo
+	banners      bannerRepo
+	articles     articleRepo
+	slider       sliderRepo
+	brands       brandRepo
+	customers    customerRepo
+	supportCards supportCardRepo
+	admins       adminRepo
+	conference   conferenceRepo
+	performer    performerRepo
+	mediaRepo    mediaAssetRepo
+	cfg          *config.Config
+	storage      storage.Storage
 }
 
 func New(db *pgxpool.Pool, cfg *config.Config) *Handler {
+	var store storage.Storage
+	if cfg.CloudinaryCloudName != "" {
+		cld, err := storage.NewCloudinary(cfg.CloudinaryCloudName, cfg.CloudinaryAPIKey, cfg.CloudinaryAPISecret, "goshen")
+		if err != nil {
+			panic("cloudinary init: " + err.Error())
+		}
+		store = cld
+	} else {
+		store = storage.NewLocal(cfg.UploadDir, cfg.BackendURL)
+	}
+
 	return &Handler{
 		products:     repository.NewProductRepo(db),
 		featured:     repository.NewFeaturedRepo(db),
@@ -148,6 +159,6 @@ func New(db *pgxpool.Pool, cfg *config.Config) *Handler {
 		performer:    repository.NewPerformerRepo(db),
 		mediaRepo:    repository.NewMediaAssetRepo(db),
 		cfg:          cfg,
-		storage:      storage.New(cfg.UploadDir, cfg.BackendURL),
+		storage:      store,
 	}
 }

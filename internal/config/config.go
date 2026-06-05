@@ -8,12 +8,15 @@ import (
 )
 
 type Config struct {
-	Port           string
-	DatabaseURL    string
-	JWTSecret      string
-	FrontendOrigin string
-	BackendURL     string
-	UploadDir      string
+	Port                string
+	DatabaseURL         string
+	JWTSecret           string
+	FrontendOrigin      string
+	BackendURL          string
+	UploadDir           string
+	CloudinaryCloudName string
+	CloudinaryAPIKey    string
+	CloudinaryAPISecret string
 }
 
 func Load() *Config {
@@ -22,12 +25,15 @@ func Load() *Config {
 	}
 	port := getEnv("PORT", "8080")
 	return &Config{
-		Port:           port,
-		DatabaseURL:    getEnv("DATABASE_URL", ""),
-		JWTSecret:      getEnv("JWT_SECRET", "change-me-in-production"),
-		FrontendOrigin: getEnv("FRONTEND_ORIGIN", "http://localhost:3000"),
-		BackendURL:     getEnv("BACKEND_URL", "http://localhost:"+port),
-		UploadDir:      getEnv("UPLOAD_DIR", "./uploads"),
+		Port:                port,
+		DatabaseURL:         getEnv("DATABASE_URL", ""),
+		JWTSecret:           getEnv("JWT_SECRET", "change-me-in-production"),
+		FrontendOrigin:      getEnv("FRONTEND_ORIGIN", "http://localhost:3000"),
+		BackendURL:          getEnv("BACKEND_URL", "http://localhost:"+port),
+		UploadDir:           getEnv("UPLOAD_DIR", "./uploads"),
+		CloudinaryCloudName: getEnv("CLOUDINARY_CLOUD_NAME", ""),
+		CloudinaryAPIKey:    getEnv("CLOUDINARY_API_KEY", ""),
+		CloudinaryAPISecret: getEnv("CLOUDINARY_API_SECRET", ""),
 	}
 }
 
