@@ -24,6 +24,10 @@ coverage.out
 # ── Go tool cache ─────────────────────────────────────────
 vendor/
 
+# ── Node.js ───────────────────────────────────────────────
+node_modules/
+dist/
+
 # ── Uploaded files ───────────────────────────────────────
 /uploads/*
 !/uploads/.gitkeep
