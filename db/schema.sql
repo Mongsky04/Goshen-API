@@ -39,11 +39,19 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS featured (
   id                  BIGSERIAL    PRIMARY KEY,
   product_id          BIGINT       NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  name                TEXT         NOT NULL DEFAULT '',
+  image_url           TEXT         NOT NULL DEFAULT '',
+  category            TEXT         NOT NULL DEFAULT '',
+  sub_category        TEXT         NOT NULL DEFAULT '',
   featured_categories TEXT[]       NOT NULL DEFAULT '{}',
   sort_order          INT          NOT NULL DEFAULT 0,
   created_at          TIMESTAMPTZ  NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
+ALTER TABLE featured ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';
+ALTER TABLE featured ADD COLUMN IF NOT EXISTS image_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE featured ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT '';
+ALTER TABLE featured ADD COLUMN IF NOT EXISTS sub_category TEXT NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS homepage_grid_products (
   id         BIGSERIAL    PRIMARY KEY,

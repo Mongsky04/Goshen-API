@@ -38,6 +38,10 @@ export const products = pgTable('products', {
 export const featured = pgTable('featured', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   productId: bigint('product_id', { mode: 'number' }).notNull().references(() => products.id, { onDelete: 'cascade' }),
+  name: text('name').notNull().default(''),
+  imageUrl: text('image_url').notNull().default(''),
+  category: text('category').notNull().default(''),
+  subCategory: text('sub_category').notNull().default(''),
   featuredCategories: text('featured_categories').array().notNull().default([]),
   sortOrder: integer('sort_order').notNull().default(0),
   ...timestamps,

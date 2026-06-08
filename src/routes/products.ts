@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { products } from '../db/schema.js'
+import { deleteCloudinaryAsset } from '../lib/storage.js'
 import { ok, created, badRequest, notFound, internalError } from '../lib/response.js'
 import { requireAuth } from '../middleware/auth.js'
 import { parsePage, uploadIfPresent, MimeError } from '../lib/route-helpers.js'
@@ -72,7 +73,8 @@ productRoutes.delete('/:id', requireAuth, async (c) => {
   try {
     const id = parseInt(c.req.param('id'))
     if (isNaN(id)) return badRequest(c, 'invalid id')
-    await db.delete(products).where(eq(products.id, id))
+    const [deleted] = await db.delete(products).where(eq(products.id, id)).returning()
+    if (deleted?.imageUrl) await deleteCloudinaryAsset(deleted.imageUrl)
     return ok(c, null)
   } catch {
     return internalError(c)

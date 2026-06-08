@@ -58,8 +58,14 @@ featuredRoutes.post('/', requireAuth, async (c) => {
   try {
     const body = await c.req.json<{ product_id?: number; featured_categories?: string[] }>()
     if (!body.product_id) return badRequest(c, 'product_id is required')
+    const [product] = await db.select().from(products).where(eq(products.id, body.product_id)).limit(1)
+    if (!product) return notFound(c, 'product not found')
     const [row] = await db.insert(featured).values({
-      productId: body.product_id,
+      productId: product.id,
+      name: product.name,
+      imageUrl: product.imageUrl,
+      category: product.category,
+      subCategory: product.subCategory,
       featuredCategories: body.featured_categories ?? [],
     }).returning()
     return created(c, await getFeaturedById(row.id))
@@ -75,8 +81,15 @@ featuredRoutes.put('/:id', requireAuth, async (c) => {
     const existing = await getFeaturedById(id)
     if (!existing) return notFound(c, 'featured not found')
     const body = await c.req.json<{ product_id?: number; featured_categories?: string[] }>()
+    const nextProductId = body.product_id ?? existing.productId
+    const [product] = await db.select().from(products).where(eq(products.id, nextProductId)).limit(1)
+    if (!product) return notFound(c, 'product not found')
     await db.update(featured).set({
-      productId: body.product_id ?? existing.productId,
+      productId: product.id,
+      name: product.name,
+      imageUrl: product.imageUrl,
+      category: product.category,
+      subCategory: product.subCategory,
       featuredCategories: body.featured_categories ?? existing.featuredCategories,
     }).where(eq(featured.id, id))
     return ok(c, await getFeaturedById(id))

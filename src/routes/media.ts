@@ -6,6 +6,7 @@ import { mediaAssets } from '../db/schema.js'
 import { ok, badRequest, internalError } from '../lib/response.js'
 import { requireAuth } from '../middleware/auth.js'
 import { uploadIfPresent, MimeError } from '../lib/route-helpers.js'
+import { deleteCloudinaryAsset } from '../lib/storage.js'
 
 export const mediaRoutes = new Hono()
 
@@ -43,7 +44,8 @@ mediaRoutes.delete('/:id', requireAuth, async (c) => {
   try {
     const id = parseInt(c.req.param('id'))
     if (isNaN(id)) return badRequest(c, 'invalid id')
-    await db.delete(mediaAssets).where(eq(mediaAssets.id, id))
+    const [deleted] = await db.delete(mediaAssets).where(eq(mediaAssets.id, id)).returning()
+    if (deleted?.url) await deleteCloudinaryAsset(deleted.url)
     return ok(c, null)
   } catch { return internalError(c) }
 })

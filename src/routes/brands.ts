@@ -6,6 +6,7 @@ import { brands } from '../db/schema.js'
 import { ok, created, badRequest, notFound, internalError } from '../lib/response.js'
 import { requireAuth } from '../middleware/auth.js'
 import { uploadIfPresent, MimeError } from '../lib/route-helpers.js'
+import { deleteCloudinaryAsset } from '../lib/storage.js'
 
 export const brandRoutes = new Hono()
 
@@ -65,7 +66,8 @@ brandRoutes.delete('/:id', requireAuth, async (c) => {
   try {
     const id = parseInt(c.req.param('id'))
     if (isNaN(id)) return badRequest(c, 'invalid id')
-    await db.delete(brands).where(eq(brands.id, id))
+    const [deleted] = await db.delete(brands).where(eq(brands.id, id)).returning()
+    if (deleted?.imageUrl) await deleteCloudinaryAsset(deleted.imageUrl)
     return ok(c, null)
   } catch {
     return internalError(c)

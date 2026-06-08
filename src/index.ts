@@ -1,9 +1,9 @@
 // goshen-api/src/index.ts
 import { serve } from '@hono/node-server'
-import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { config } from './config.js'
+import { ensureCloudinaryFolder } from './lib/storage.js'
 import { authRoutes } from './routes/auth.js'
 import { productRoutes } from './routes/products.js'
 import { featuredRoutes } from './routes/featured.js'
@@ -38,9 +38,6 @@ app.use('*', async (c, next) => {
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
-// Serve local uploads
-app.use('/uploads/*', serveStatic({ root: './' }))
-
 // Auth routes (login, me)
 app.route('/', authRoutes)
 
@@ -56,6 +53,8 @@ app.route('/api/v1/upload', uploadRoutes)
 app.route('/api/v1/media', mediaRoutes)
 app.route('/api/v1', conferenceRoutes)
 app.route('/api/v1', performerRoutes)
+
+ensureCloudinaryFolder().catch(console.error)
 
 serve({ fetch: app.fetch, port: parseInt(config.port) }, (info) => {
   console.log(`Server started on port ${info.port}`)
