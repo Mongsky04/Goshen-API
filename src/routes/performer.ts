@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { and, eq, asc } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { performerPages, performerProducts, performerVideos, products } from '../db/schema.js'
-import { ok, notFound, internalError, badRequest } from '../lib/response.js'
+import { ok, created, notFound, internalError, badRequest } from '../lib/response.js'
 import { requireAuth } from '../middleware/auth.js'
 
 const VALID_SLUGS = new Set(['musician', 'vocalist', 'master-ceremony'])
@@ -122,4 +122,93 @@ performerRoutes.put('/admin/performer-pages/:slug', requireAuth, async (c) => {
   } catch {
     return internalError(c)
   }
+})
+
+// POST /admin/performer-pages/:slug/products
+performerRoutes.post('/admin/performer-pages/:slug/products', requireAuth, async (c) => {
+  try {
+    const slug = c.req.param('slug')
+    const [page] = await db.select().from(performerPages).where(eq(performerPages.slug, slug)).limit(1)
+    if (!page) return notFound(c, 'performer page not found')
+    const { productId } = await c.req.json<{ productId: number }>()
+    if (!productId) return badRequest(c, 'productId required')
+    const count = await db.select().from(performerProducts)
+      .where(eq(performerProducts.pageId, page.id)).then(r => r.length)
+    const [row] = await db.insert(performerProducts)
+      .values({ pageId: page.id, productId, sortOrder: count })
+      .returning()
+    return created(c, row)
+  } catch (e: any) {
+    if (e?.code === '23505') return c.json({ success: false, error: 'product already on this page' }, 409)
+    return internalError(c)
+  }
+})
+
+// PATCH /admin/performer-pages/:slug/products/:id
+performerRoutes.patch('/admin/performer-pages/:slug/products/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { isHidden } = await c.req.json<{ isHidden: boolean }>()
+    const [row] = await db.update(performerProducts).set({ isHidden }).where(eq(performerProducts.id, id)).returning()
+    if (!row) return notFound(c, 'not found')
+    return ok(c, row)
+  } catch { return internalError(c) }
+})
+
+// DELETE /admin/performer-pages/:slug/products/:id
+performerRoutes.delete('/admin/performer-pages/:slug/products/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    await db.delete(performerProducts).where(eq(performerProducts.id, id))
+    return ok(c, null)
+  } catch { return internalError(c) }
+})
+
+// POST /admin/performer-pages/:slug/videos
+performerRoutes.post('/admin/performer-pages/:slug/videos', requireAuth, async (c) => {
+  try {
+    const slug = c.req.param('slug')
+    const [page] = await db.select().from(performerPages).where(eq(performerPages.slug, slug)).limit(1)
+    if (!page) return notFound(c, 'performer page not found')
+    const { title, subtitle, thumbnailUrl, videoUrl } = await c.req.json<{
+      title: string; subtitle: string; thumbnailUrl: string; videoUrl: string
+    }>()
+    const count = await db.select().from(performerVideos)
+      .where(eq(performerVideos.pageId, page.id)).then(r => r.length)
+    const [row] = await db.insert(performerVideos)
+      .values({ pageId: page.id, isMain: false, title, subtitle, thumbnailUrl, videoUrl, sortOrder: count })
+      .returning()
+    return created(c, row)
+  } catch { return internalError(c) }
+})
+
+// PUT /admin/performer-pages/:slug/videos/:id
+performerRoutes.put('/admin/performer-pages/:slug/videos/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const body = await c.req.json<{
+      title?: string; subtitle?: string; thumbnailUrl?: string; videoUrl?: string
+    }>()
+    const fields = {
+      ...(body.title !== undefined && { title: body.title }),
+      ...(body.subtitle !== undefined && { subtitle: body.subtitle }),
+      ...(body.thumbnailUrl !== undefined && { thumbnailUrl: body.thumbnailUrl }),
+      ...(body.videoUrl !== undefined && { videoUrl: body.videoUrl }),
+    }
+    const [row] = await db.update(performerVideos).set(fields).where(eq(performerVideos.id, id)).returning()
+    if (!row) return notFound(c, 'video not found')
+    return ok(c, row)
+  } catch { return internalError(c) }
+})
+
+// DELETE /admin/performer-pages/:slug/videos/:id  (only non-main videos)
+performerRoutes.delete('/admin/performer-pages/:slug/videos/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const [video] = await db.select().from(performerVideos).where(eq(performerVideos.id, id)).limit(1)
+    if (!video) return notFound(c, 'video not found')
+    if (video.isMain) return badRequest(c, 'cannot delete main video')
+    await db.delete(performerVideos).where(eq(performerVideos.id, id))
+    return ok(c, null)
+  } catch { return internalError(c) }
 })

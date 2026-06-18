@@ -110,3 +110,11 @@ INSERT INTO homepage_support_cards (title, description, cta_label, cta_href, sor
     3
   )
 ON CONFLICT DO NOTHING;
+
+-- ── Performer pages ──────────────────────────────────────────
+
+INSERT INTO performer_pages (slug, label) VALUES
+  ('musician',        'Musician'),
+  ('vocalist',        'Vocalist'),
+  ('master-ceremony', 'Master of Ceremony')
+ON CONFLICT (slug) DO NOTHING;

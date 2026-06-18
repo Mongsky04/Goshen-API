@@ -9,13 +9,12 @@ import { productRoutes } from './routes/products.js'
 import { featuredRoutes } from './routes/featured.js'
 import { articleRoutes } from './routes/articles.js'
 import { sliderRoutes } from './routes/sliders.js'
-import { brandRoutes } from './routes/brands.js'
-import { customerRoutes } from './routes/customers.js'
 import { homepageRoutes } from './routes/homepage.js'
 import { uploadRoutes } from './routes/upload.js'
 import { mediaRoutes } from './routes/media.js'
 import { conferenceRoutes } from './routes/conference.js'
 import { performerRoutes } from './routes/performer.js'
+import { caseStudyRoutes } from './routes/case-study.js'
 
 const origins = config.frontendOrigin.split(',').map(s => s.trim()).filter(Boolean)
 
@@ -46,13 +45,12 @@ app.route('/api/v1/products', productRoutes)
 app.route('/api/v1/featured', featuredRoutes)
 app.route('/api/v1/articles', articleRoutes)
 app.route('/api/v1/banners', sliderRoutes)
-app.route('/api/v1/brands', brandRoutes)
-app.route('/api/v1/customers', customerRoutes)
 app.route('/api/v1', homepageRoutes)
 app.route('/api/v1/upload', uploadRoutes)
 app.route('/api/v1/media', mediaRoutes)
 app.route('/api/v1', conferenceRoutes)
 app.route('/api/v1', performerRoutes)
+app.route('/api/v1/case-studies', caseStudyRoutes)
 
 ensureCloudinaryFolder().catch(console.error)
 

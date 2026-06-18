@@ -60,8 +60,10 @@ productRoutes.put('/:id', requireAuth, async (c) => {
     const name = (form.get('name') as string) || existing.name
     const category = (form.get('category') as string) ?? existing.category
     const subCategory = (form.get('sub_category') as string) ?? existing.subCategory
-    const imageUrl = (await uploadIfPresent(form, 'image')) ?? existing.imageUrl
+    const newImageUrl = await uploadIfPresent(form, 'image')
+    const imageUrl = newImageUrl ?? existing.imageUrl
     const [row] = await db.update(products).set({ name, imageUrl, category, subCategory }).where(eq(products.id, id)).returning()
+    if (newImageUrl && existing.imageUrl) deleteCloudinaryAsset(existing.imageUrl).catch(() => {})
     return ok(c, row)
   } catch (e) {
     if (e instanceof MimeError) return badRequest(c, e.message)

@@ -7,7 +7,7 @@ import {
   conferenceProducts, conferenceWorkspace, conferenceRoomSolutions,
   conferenceRoomKitItems, products,
 } from '../db/schema.js'
-import { ok, notFound, internalError, badRequest } from '../lib/response.js'
+import { ok, created, notFound, internalError, badRequest } from '../lib/response.js'
 import { requireAuth } from '../middleware/auth.js'
 
 const VALID_SLUGS = new Set(['enterprise', 'government', 'higher-education', 'hospitality'])
@@ -164,4 +164,136 @@ conferenceRoutes.put('/admin/conference-pages/:slug', requireAuth, async (c) => 
   } catch {
     return internalError(c)
   }
+})
+
+// POST /admin/conference-pages/:slug/products
+conferenceRoutes.post('/admin/conference-pages/:slug/products', requireAuth, async (c) => {
+  try {
+    const slug = c.req.param('slug')
+    const [page] = await db.select().from(conferencePages).where(eq(conferencePages.slug, slug)).limit(1)
+    if (!page) return notFound(c, 'conference page not found')
+    const { productId, section } = await c.req.json<{ productId: number; section: string }>()
+    if (!productId || !section) return badRequest(c, 'productId and section required')
+    const count = await db.select().from(conferenceProducts)
+      .where(eq(conferenceProducts.pageId, page.id)).then(r => r.length)
+    const [row] = await db.insert(conferenceProducts)
+      .values({ pageId: page.id, productId, section, sortOrder: count })
+      .returning()
+    return created(c, row)
+  } catch (e: any) {
+    if (e?.code === '23505') return c.json({ success: false, error: 'product already on this page' }, 409)
+    return internalError(c)
+  }
+})
+
+// PATCH /admin/conference-pages/:slug/products/:id
+conferenceRoutes.patch('/admin/conference-pages/:slug/products/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { isHidden } = await c.req.json<{ isHidden: boolean }>()
+    const [row] = await db.update(conferenceProducts).set({ isHidden }).where(eq(conferenceProducts.id, id)).returning()
+    if (!row) return notFound(c, 'not found')
+    return ok(c, row)
+  } catch { return internalError(c) }
+})
+
+// DELETE /admin/conference-pages/:slug/products/:id
+conferenceRoutes.delete('/admin/conference-pages/:slug/products/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    await db.delete(conferenceProducts).where(eq(conferenceProducts.id, id))
+    return ok(c, null)
+  } catch { return internalError(c) }
+})
+
+// POST /admin/conference-pages/:slug/solutions
+conferenceRoutes.post('/admin/conference-pages/:slug/solutions', requireAuth, async (c) => {
+  try {
+    const slug = c.req.param('slug')
+    const [page] = await db.select().from(conferencePages).where(eq(conferencePages.slug, slug)).limit(1)
+    if (!page) return notFound(c, 'conference page not found')
+    const body = await c.req.json<{
+      roomSize: string; title: string; description: string; kitLabel: string; kitItems: string[]
+      imageUrl: string; imageUrl2: string
+      card1Name: string; card1Category: string; card1SubCategory: string
+      card2Name: string; card2Category: string; card2SubCategory: string
+      isHidden: boolean
+    }>()
+    const count = await db.select().from(conferenceRoomSolutions)
+      .where(eq(conferenceRoomSolutions.pageId, page.id)).then(r => r.length)
+    const [sol] = await db.insert(conferenceRoomSolutions).values({
+      pageId: page.id,
+      roomSize: body.roomSize,
+      title: body.title ?? '',
+      description: body.description ?? '',
+      kitLabel: body.kitLabel ?? 'IMX ROOM KIT 30:',
+      imageUrl: body.imageUrl ?? '',
+      imageUrl2: body.imageUrl2 ?? '',
+      card1Name: body.card1Name ?? '',
+      card1Category: body.card1Category ?? '',
+      card1SubCategory: body.card1SubCategory ?? '',
+      card2Name: body.card2Name ?? '',
+      card2Category: body.card2Category ?? '',
+      card2SubCategory: body.card2SubCategory ?? '',
+      isHidden: body.isHidden ?? false,
+      sortOrder: count,
+    }).returning()
+    const items = (body.kitItems ?? []).filter(Boolean)
+    for (let i = 0; i < items.length; i++) {
+      await db.insert(conferenceRoomKitItems).values({ roomSolutionId: sol.id, item: items[i], sortOrder: i })
+    }
+    return created(c, sol)
+  } catch (e: any) {
+    if (e?.code === '23505') return c.json({ success: false, error: 'roomSize already exists for this page' }, 409)
+    return internalError(c)
+  }
+})
+
+// PUT /admin/conference-pages/:slug/solutions/:id
+conferenceRoutes.put('/admin/conference-pages/:slug/solutions/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const body = await c.req.json<{
+      roomSize?: string; title?: string; description?: string; kitLabel?: string; kitItems?: string[]
+      imageUrl?: string; imageUrl2?: string
+      card1Name?: string; card1Category?: string; card1SubCategory?: string
+      card2Name?: string; card2Category?: string; card2SubCategory?: string
+      isHidden?: boolean
+    }>()
+    const { kitItems } = body
+    const fields = {
+      ...(body.roomSize !== undefined && { roomSize: body.roomSize }),
+      ...(body.title !== undefined && { title: body.title }),
+      ...(body.description !== undefined && { description: body.description }),
+      ...(body.kitLabel !== undefined && { kitLabel: body.kitLabel }),
+      ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl }),
+      ...(body.imageUrl2 !== undefined && { imageUrl2: body.imageUrl2 }),
+      ...(body.card1Name !== undefined && { card1Name: body.card1Name }),
+      ...(body.card1Category !== undefined && { card1Category: body.card1Category }),
+      ...(body.card1SubCategory !== undefined && { card1SubCategory: body.card1SubCategory }),
+      ...(body.card2Name !== undefined && { card2Name: body.card2Name }),
+      ...(body.card2Category !== undefined && { card2Category: body.card2Category }),
+      ...(body.card2SubCategory !== undefined && { card2SubCategory: body.card2SubCategory }),
+      ...(body.isHidden !== undefined && { isHidden: body.isHidden }),
+    }
+    const [sol] = await db.update(conferenceRoomSolutions).set(fields).where(eq(conferenceRoomSolutions.id, id)).returning()
+    if (!sol) return notFound(c, 'solution not found')
+    if (kitItems !== undefined) {
+      await db.delete(conferenceRoomKitItems).where(eq(conferenceRoomKitItems.roomSolutionId, id))
+      const items = kitItems.filter(Boolean)
+      for (let i = 0; i < items.length; i++) {
+        await db.insert(conferenceRoomKitItems).values({ roomSolutionId: id, item: items[i], sortOrder: i })
+      }
+    }
+    return ok(c, sol)
+  } catch { return internalError(c) }
+})
+
+// DELETE /admin/conference-pages/:slug/solutions/:id
+conferenceRoutes.delete('/admin/conference-pages/:slug/solutions/:id', requireAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    await db.delete(conferenceRoomSolutions).where(eq(conferenceRoomSolutions.id, id))
+    return ok(c, null)
+  } catch { return internalError(c) }
 })

@@ -217,3 +217,13 @@ export const pageBanners = pgTable('page_banners', {
   bannerId: bigint('banner_id', { mode: 'number' }).notNull().references(() => slider.id, { onDelete: 'cascade' }),
   orderNum: integer('order_num').notNull().default(0),
 }, (t) => [unique().on(t.pageSlug, t.bannerId)])
+
+export const caseStudies = pgTable('case_studies', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  title: text('title').notNull(),
+  description: text('description').notNull().default(''),
+  imageUrl: text('image_url').notNull().default(''),
+  isFeatured: boolean('is_featured').notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  ...timestamps,
+})

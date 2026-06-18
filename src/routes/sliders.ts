@@ -55,8 +55,10 @@ sliderRoutes.put('/:id', requireAuth, async (c) => {
     const form = await c.req.formData()
     const title = (form.get('title') as string) ?? existing.title
     const orderNum = parseInt((form.get('order_num') as string) ?? '') || existing.orderNum
-    const imageUrl = (await uploadIfPresent(form, 'image')) ?? existing.imageUrl
+    const newImageUrl = await uploadIfPresent(form, 'image')
+    const imageUrl = newImageUrl ?? existing.imageUrl
     const [row] = await db.update(slider).set({ title, imageUrl, orderNum }).where(eq(slider.id, id)).returning()
+    if (newImageUrl && existing.imageUrl) deleteCloudinaryAsset(existing.imageUrl).catch(() => {})
     return ok(c, row)
   } catch (e) {
     if (e instanceof MimeError) return badRequest(c, e.message)

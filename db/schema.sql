@@ -257,6 +257,18 @@ CREATE TABLE IF NOT EXISTS page_banners (
   UNIQUE(page_slug, banner_id)
 );
 
+-- ── Case Studies ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS case_studies (
+  id           BIGSERIAL    PRIMARY KEY,
+  title        TEXT         NOT NULL,
+  description  TEXT         NOT NULL DEFAULT '',
+  image_url    TEXT         NOT NULL DEFAULT '',
+  is_featured  BOOLEAN      NOT NULL DEFAULT false,
+  sort_order   INT          NOT NULL DEFAULT 0,
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
 DO $$
 DECLARE t TEXT;
 BEGIN
@@ -265,7 +277,8 @@ BEGIN
     'conference_pages', 'conference_hero', 'conference_section_titles',
     'conference_products', 'conference_workspace',
     'conference_room_solutions', 'conference_room_kit_items',
-    'performer_pages', 'performer_products', 'performer_videos'
+    'performer_pages', 'performer_products', 'performer_videos',
+    'case_studies'
   ] LOOP
     EXECUTE format(
       'DROP TRIGGER IF EXISTS trg_%I_updated_at ON %I;
